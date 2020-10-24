@@ -1,0 +1,57 @@
+#!/bin/bash
+# Creator: Daniele Barbaro
+
+php_version="php@$1"
+brew_versions=("5.6", "7.0", "7.1", "7.2", "7.3", "7.4")
+php_versions=("php@5.6" "php@7.0" "php@7.1" "php@7.2" "php@7.3" "php@7.4")
+php_latest=${php_versions[${#php_versions[@]} - 1]}
+php_installed=()
+
+if [[ -n $(brew services list | grep -E "$php_version.*started") ]]; then
+    echo -e "\n🦾   $php_version is already up and running "
+    exit
+fi
+
+if [[ -z "$1" ]]; then
+    echo "⚠️   Please use: sphp {version} "
+    echo -e "📝   Available version list:" ${brew_versions[@]}
+    exit
+fi
+
+for version in ${php_versions[*]}; do
+    if [[ -n $(brew ls --versions ${version}) ]]; then
+        php_installed+=("$version")
+    fi
+done
+
+if [[ " ${php_versions[*]} " == *"$php_version"* ]]; then
+    if [[ " ${php_installed[*]} " == *"$php_version"* ]]; then
+        echo -e "\n🛠   Switching to $php_version"
+        for version in ${php_installed[@]}; do
+            if [[ -n $(brew ls --versions ${version}) ]]; then
+                if [[ ${version} == ${php_latest} && -n $(brew services list | grep -E "php.*started") ]]; then
+                    brew unlink php
+                    brew services stop php
+                else
+                    if [[ -n $(brew services list | grep -E "$version.*started") ]]; then
+                        brew unlink ${version}
+                        brew services stop ${version}
+                    fi
+                fi
+            fi
+        done
+
+        brew link --force --overwrite "$php_version"
+        brew services start "$php_version"
+
+        echo -e "\n⏰   $USER now use:"
+        php -v
+
+        echo -e "\n🗂   $USER services:"
+        brew services list
+    else
+        echo "🚫   Sorry, but $php_version is not installed via brew. Install by running: brew install $php_version"
+    fi
+else
+    echo "❌   Unknown version of PHP. PHP Switcher can only handle arguments of:" ${brew_versions[@]}
+fi
