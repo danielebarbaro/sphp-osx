@@ -30,12 +30,12 @@ if [[ " ${php_versions[*]} " == *"$php_version"* ]]; then
         for version in ${php_installed[@]}; do
             if [[ -n $(brew ls --versions ${version}) ]]; then
                 if [[ ${version} == ${php_latest} && -n $(brew services list | grep -E "php.*started") ]]; then
-                    brew unlink php
                     brew services stop php
+                    brew unlink php
                 else
                     if [[ -n $(brew services list | grep -E "$version.*started") ]]; then
-                        brew unlink ${version}
                         brew services stop ${version}
+                        brew unlink ${version}
                     fi
                 fi
             fi
